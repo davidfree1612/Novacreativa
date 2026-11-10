@@ -2,12 +2,24 @@ import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-const prisma = new PrismaClient();
+// Instanciamos PrismaClient apuntando explícitamente a process.env.DATABASE_URL
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL,
+    },
+  },
+});
 
 // Registro de empresa
 export const register = async (req, res) => {
   try {
     const { nombre, empresa, email, password } = req.body;
+
+    // Validación preventiva de campos
+    if (!nombre || !empresa || !email || !password) {
+      return res.status(400).json({ message: 'Todos los campos son obligatorios.' });
+    }
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
@@ -42,6 +54,8 @@ export const register = async (req, res) => {
       token
     });
   } catch (error) {
+    // Esto es clave: imprimirá el stack trace exacto en la pestaña Logs de Render
+    console.error('Error detallado en register:', error);
     res.status(500).json({ message: 'Error al registrar empresa.', error: error.message });
   }
 };
@@ -50,6 +64,10 @@ export const register = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Correo y contraseña son requeridos.' });
+    }
 
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
@@ -77,6 +95,7 @@ export const login = async (req, res) => {
       token
     });
   } catch (error) {
+    console.error('Error detallado en login:', error);
     res.status(500).json({ message: 'Error al iniciar sesión.', error: error.message });
   }
 };
