@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import AuthModal from './components/AuthModal';
 import { createIdea, getMyIdeas, deleteIdea } from './services/api';
-import { 
-  Sparkles, 
-  Palette, 
-  Globe, 
-  Rocket, 
-  Layers, 
-  ArrowRight, 
-  Send, 
-  X, 
+import {
+  Sparkles,
+  Palette,
+  Globe,
+  Rocket,
+  Layers,
+  ArrowRight,
+  Send,
+  X,
   Menu,
   User,
   Building2,
@@ -42,6 +42,8 @@ export default function App() {
     detalles: ''
   });
 
+  // Referencias para validación y foco en campos faltantes
+  const tituloRef = useRef(null);
   const modalRef = useRef(null);
 
   // 1. Cargar datos de la sesión guardada y sincronizar ideas de PostgreSQL
@@ -117,11 +119,12 @@ export default function App() {
     { id: 4, title: "E-Commerce Luxury", category: "Web", image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=600" },
   ];
 
-  const filteredProjects = activeFilter === 'Todos' 
-    ? projects 
+  const filteredProjects = activeFilter === 'Todos'
+    ? projects
     : projects.filter(p => p.category === activeFilter);
 
-  const openRegisterModal = () => {
+  // Abre el portal de empresa (Login / Registro en la misma ventana con pestañas)
+  const openPortalEmpresa = () => {
     setIsAuthOpen(true);
   };
 
@@ -135,12 +138,21 @@ export default function App() {
 
   const closeModal = () => modalRef.current?.close();
 
-  // 4. Guardar Idea enviándola a la Base de Datos mediante la API
+  // 4. Guardar Idea con validación de campos obligatorios
   const handleSaveIdea = async (e) => {
     e.preventDefault();
+
+    // Validación si el usuario no ha iniciado sesión
     if (!user) {
       closeModal();
       setIsAuthOpen(true);
+      return;
+    }
+
+    // Validación de campos vacíos con redirección/enfoque al campo faltante
+    if (!newIdea.titulo.trim()) {
+      alert("⚠️ Falta completar el nombre de tu proyecto/idea.");
+      tituloRef.current?.focus();
       return;
     }
 
@@ -156,7 +168,7 @@ export default function App() {
         tiempo: '2 a 4 semanas',
         detalles: ''
       });
-      alert(`¡Idea guardada exitosamente en el panel de ${user.empresa || user.company}!`);
+      alert(`✨ ¡Idea enviada exitosamente al panel de ${user.empresa || user.company}!`);
     } catch (error) {
       alert(`Error al guardar la idea: ${error.message}`);
     } finally {
@@ -194,18 +206,18 @@ export default function App() {
           </ul>
 
           <nav className="flex items-center gap-3">
-            {/* BOTÓN 1: COTIZAR IDEA */}
-            <button 
-              onClick={openRegisterModal}
-              className="hidden sm:flex items-center gap-2 bg-zinc-900 border border-purple-500/40 hover:border-purple-400 text-purple-300 px-4 py-2.5 rounded-full font-semibold text-sm transition-all cursor-pointer"
+            {/* BOTÓN 1: CREAR IDEA (Reemplaza a Cotizar Idea, con la misma función y estilo del panel) */}
+            <button
+              onClick={openIdeasPanel}
+              className="hidden sm:flex items-center gap-2 bg-gradient-to-r from-purple-600 via-fuchsia-600 to-cyan-500 hover:from-purple-500 hover:to-cyan-400 text-white px-5 py-2.5 rounded-full font-bold text-sm transition-all shadow-[0_0_20px_rgba(168,85,247,0.5)] cursor-pointer"
             >
-              <FileText className="w-4 h-4 text-purple-400" />
-              Cotizar Idea
+              <FileText className="w-4 h-4" />
+              Crear Idea
             </button>
 
-            {/* ACCESO A EMPRESA / PANEL */}
-            <button 
-              onClick={openIdeasPanel}
+            {/* BOTÓN 2: PORTAL DE EMPRESA / LOGIN */}
+            <button
+              onClick={openPortalEmpresa}
               className="flex items-center gap-2 bg-gradient-to-r from-purple-600 via-fuchsia-600 to-cyan-500 hover:from-purple-500 hover:to-cyan-400 text-white px-5 py-2.5 rounded-full font-bold transition-all shadow-[0_0_20px_rgba(168,85,247,0.5)] cursor-pointer"
             >
               <User className="w-4 h-4" />
@@ -228,7 +240,7 @@ export default function App() {
           </span>
 
           <h1 className="text-5xl md:text-7xl font-black tracking-tight max-w-4xl leading-tight mb-8">
-            <span className="bg-gradient-to-r from-purple-400 via-fuchsia-400 to-cyan-400 bg-clip-text text-transparent drop-shadow-[0_0_35px_rgba(168,85,247,0.4)]">Diseñamos el futuro.</span> 
+            <span className="bg-gradient-to-r from-purple-400 via-fuchsia-400 to-cyan-400 bg-clip-text text-transparent drop-shadow-[0_0_35px_rgba(168,85,247,0.4)]">Diseñamos el futuro.</span>
           </h1>
 
           <p className="text-lg md:text-xl text-zinc-400 max-w-2xl mb-10 leading-relaxed">
@@ -236,8 +248,7 @@ export default function App() {
           </p>
 
           <nav className="flex flex-col sm:flex-row gap-5">
-            {/* BOTÓN 2: MI IDEA */}
-            <button 
+            <button
               onClick={openIdeasPanel}
               className="flex items-center justify-center gap-3 bg-gradient-to-r from-purple-600 via-fuchsia-600 to-cyan-500 text-white px-8 py-4 rounded-full font-bold text-lg transition-all shadow-[0_0_30px_rgba(168,85,247,0.6)] hover:scale-105 active:scale-95 border border-purple-400/30 cursor-pointer"
             >
@@ -280,11 +291,10 @@ export default function App() {
                 <button
                   key={cat}
                   onClick={() => setActiveFilter(cat)}
-                  className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                    activeFilter === cat 
-                      ? 'bg-gradient-to-r from-purple-600 to-cyan-500 text-white shadow-[0_0_15px_rgba(168,85,247,0.5)]' 
-                      : 'text-zinc-400 hover:text-white'
-                  }`}
+                  className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${activeFilter === cat
+                    ? 'bg-gradient-to-r from-purple-600 to-cyan-500 text-white shadow-[0_0_15px_rgba(168,85,247,0.5)]'
+                    : 'text-zinc-400 hover:text-white'
+                    }`}
                 >
                   {cat}
                 </button>
@@ -317,9 +327,9 @@ export default function App() {
         </section>
       </footer>
 
-      {/* PANEL "MI IDEA" - CONECTADO CON EXPRESS & POSTGRESQL */}
-      <dialog 
-        ref={modalRef} 
+      {/* PANEL "MI IDEA" - MODAL */}
+      <dialog
+        ref={modalRef}
         className="backdrop:bg-black/85 bg-zinc-900/95 text-white p-6 sm:p-8 rounded-3xl border border-purple-500/50 max-w-2xl w-full shadow-[0_0_50px_rgba(168,85,247,0.4)] backdrop-blur-2xl"
       >
         <header className="flex justify-between items-center mb-6 border-b border-purple-900/40 pb-4">
@@ -332,7 +342,7 @@ export default function App() {
           </button>
         </header>
 
-        {/* DATOS DE LA EMPRESA AUTENTICADA */}
+        {/* DATOS DE LA EMPRESA AUTENTICADA Y CONTADOR "X Ideas" */}
         {user && (
           <aside className="mb-6 p-4 rounded-2xl bg-purple-950/40 border border-purple-500/30 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -344,14 +354,14 @@ export default function App() {
                 <h4 className="text-base font-bold text-white">{user.empresa || user.company}</h4>
               </nav>
             </div>
-            
+
             <div className="flex items-center gap-3">
               <span className="text-xs bg-purple-900/60 text-purple-300 px-3 py-1 rounded-full border border-purple-500/30">
-                {userIdeas.length} {userIdeas.length === 1 ? 'Idea Guardada' : 'Ideas Guardadas'}
+                {userIdeas.length} Ideas
               </span>
-              <button 
-                onClick={handleLogout} 
-                className="text-zinc-400 hover:text-red-400 transition" 
+              <button
+                onClick={handleLogout}
+                className="text-zinc-400 hover:text-red-400 transition"
                 title="Cerrar sesión"
               >
                 <LogOut className="w-4 h-4" />
@@ -360,7 +370,7 @@ export default function App() {
           </aside>
         )}
 
-        {/* LISTA DE IDEAS DESPLEGADAS DESDE POSTGRESQL */}
+        {/* LISTA DE IDEAS CON LA ETIQUETA "Idea registrada exitosamente" */}
         <section className="mb-8">
           <h4 className="text-sm font-bold text-zinc-300 mb-3 flex items-center gap-2">
             <Clock className="w-4 h-4 text-cyan-400" /> Mis Ideas en la Base de Datos
@@ -379,11 +389,11 @@ export default function App() {
                     <h5 className="font-bold text-white text-sm">{item.titulo}</h5>
                     <p className="text-xs text-zinc-400">{item.servicio} • <span className="text-purple-300">{item.presupuesto}</span></p>
                   </nav>
-                  
+
                   <div className="flex items-center gap-2">
                     <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-md bg-purple-950 text-purple-300 border border-purple-500/30">
                       <CheckCircle2 className="w-3 h-3 text-cyan-400" />
-                      {item.estado || 'Enviado a BD'}
+                      Idea registrada exitosamente
                     </span>
                     <button
                       onClick={() => handleDeleteIdea(item.id)}
@@ -399,7 +409,7 @@ export default function App() {
           </div>
         </section>
 
-        {/* FORMULARIO PARA GUARDAR NUEVA IDEA EN LA BD */}
+        {/* FORMULARIO CON BOTÓN "Enviar idea para revisión" */}
         <form onSubmit={handleSaveIdea} className="space-y-4 border-t border-purple-900/40 pt-6">
           <h4 className="text-sm font-bold text-zinc-200 flex items-center gap-2">
             <PlusCircle className="w-4 h-4 text-purple-400" /> Guardar Nueva Idea
@@ -407,12 +417,12 @@ export default function App() {
 
           <label className="block">
             <span className="text-xs font-medium text-zinc-300 mb-1 block">Nombre de tu proyecto/idea</span>
-            <input 
-              type="text" 
-              required
+            <input
+              ref={tituloRef}
+              type="text"
               placeholder="Ej. Plataforma E-Commerce Neón"
               value={newIdea.titulo}
-              onChange={(e) => setNewIdea({...newIdea, titulo: e.target.value})}
+              onChange={(e) => setNewIdea({ ...newIdea, titulo: e.target.value })}
               className="w-full bg-zinc-950 border border-purple-900/60 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-400"
             />
           </label>
@@ -420,9 +430,9 @@ export default function App() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <label className="block">
               <span className="text-xs font-medium text-zinc-300 mb-1 block">Servicio requerido</span>
-              <select 
+              <select
                 value={newIdea.servicio}
-                onChange={(e) => setNewIdea({...newIdea, servicio: e.target.value})}
+                onChange={(e) => setNewIdea({ ...newIdea, servicio: e.target.value })}
                 className="w-full bg-zinc-950 border border-purple-900/60 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-400 cursor-pointer"
               >
                 <option>Desarrollo Web & UI/UX</option>
@@ -434,9 +444,9 @@ export default function App() {
 
             <label className="block">
               <span className="text-xs font-medium text-zinc-300 mb-1 block">Presupuesto estimado</span>
-              <select 
+              <select
                 value={newIdea.presupuesto}
-                onChange={(e) => setNewIdea({...newIdea, presupuesto: e.target.value})}
+                onChange={(e) => setNewIdea({ ...newIdea, presupuesto: e.target.value })}
                 className="w-full bg-zinc-950 border border-purple-900/60 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-400 cursor-pointer"
               >
                 <option>$500 - $1,000 USD</option>
@@ -448,20 +458,20 @@ export default function App() {
           </div>
 
           <footer className="pt-2">
-            <button 
+            <button
               type="submit"
               disabled={submitting}
               className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 via-fuchsia-600 to-cyan-500 hover:from-purple-500 hover:to-cyan-400 text-white font-bold py-3.5 rounded-xl shadow-[0_0_20px_rgba(168,85,247,0.5)] cursor-pointer disabled:opacity-50"
             >
-              {submitting ? 'Guardando en PostgreSQL...' : 'Guardar Idea en mi Cuenta'}
+              {submitting ? 'Enviando...' : 'Enviar idea para revisión'}
               <Send className="w-4 h-4" />
             </button>
           </footer>
         </form>
       </dialog>
 
-      {/* MODAL DE REGISTRO / AUTENTICACIÓN */}
-      <AuthModal 
+      {/* MODAL DE REGISTRO / AUTENTICACIÓN (Portal de Empresa) */}
+      <AuthModal
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
         onLoginSuccess={handleLoginSuccess}
