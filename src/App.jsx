@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import AuthModal from './components/AuthModal';
+import AdminPanel from './components/AdminPanel';
 import { createIdea, getMyIdeas, deleteIdea } from './services/api';
 import {
   Sparkles,
@@ -16,16 +17,20 @@ import {
   PlusCircle,
   Clock,
   CheckCircle2,
+  XCircle,
   FolderKanban,
   FileText,
   Trash2,
-  LogOut
+  LogOut,
+  AlertCircle,
+  ShieldAlert
 } from 'lucide-react';
 
 export default function App() {
   const [activeFilter, setActiveFilter] = useState('Todos');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isAdminOpen, setIsAdminOpen] = useState(false); // Estado para abrir el Panel Admin
   const [user, setUser] = useState(null);
 
   // Estado real conectado al Backend
@@ -42,9 +47,10 @@ export default function App() {
     detalles: ''
   });
 
-  // Referencias para validación y foco en campos faltantes
+  // Referencias separadas para el Modal de Creación y el Modal de Historial
+  const createModalRef = useRef(null);
+  const historyModalRef = useRef(null);
   const tituloRef = useRef(null);
-  const modalRef = useRef(null);
 
   // 1. Cargar datos de la sesión guardada y sincronizar ideas de PostgreSQL
   useEffect(() => {
@@ -76,7 +82,12 @@ export default function App() {
     setIsAuthOpen(false);
     fetchUserIdeas();
     setTimeout(() => {
-      modalRef.current?.showModal();
+      // Si es admin, abre el panel admin; si es usuario normal, abre el historial
+      if (userData.isAdmin) {
+        setIsAdminOpen(true);
+      } else {
+        historyModalRef.current?.showModal();
+      }
     }, 300);
   };
 
@@ -86,7 +97,8 @@ export default function App() {
     localStorage.removeItem('user');
     setUser(null);
     setUserIdeas([]);
-    closeModal();
+    closeModals();
+    setIsAdminOpen(false);
   };
 
   const services = [
@@ -123,35 +135,45 @@ export default function App() {
     ? projects
     : projects.filter(p => p.category === activeFilter);
 
-  // Abre el portal de empresa (Login / Registro en la misma ventana con pestañas)
   const openPortalEmpresa = () => {
     setIsAuthOpen(true);
   };
 
-  const openIdeasPanel = () => {
+  // Abrir panel exclusivo de Creación (Botón Crear Idea)
+  const openCreatePanel = () => {
     if (!user) {
       setIsAuthOpen(true);
     } else {
-      modalRef.current?.showModal();
+      createModalRef.current?.showModal();
     }
   };
 
-  const closeModal = () => modalRef.current?.close();
+  // Abrir panel exclusivo de Historial (Botón Mi idea / Mis ideas)
+  const openHistoryPanel = () => {
+    if (!user) {
+      setIsAuthOpen(true);
+    } else {
+      historyModalRef.current?.showModal();
+    }
+  };
 
-  // 4. Guardar Idea con validación de campos obligatorios
+  const closeModals = () => {
+    createModalRef.current?.close();
+    historyModalRef.current?.close();
+  };
+
+  // 4. Guardar Idea con validación
   const handleSaveIdea = async (e) => {
     e.preventDefault();
 
-    // Validación si el usuario no ha iniciado sesión
     if (!user) {
-      closeModal();
+      createModalRef.current?.close();
       setIsAuthOpen(true);
       return;
     }
 
-    // Validación de campos vacíos con redirección/enfoque al campo faltante
     if (!newIdea.titulo.trim()) {
-      alert("⚠️ Falta completar el nombre de tu proyecto/idea.");
+      alert("Falta completar el nombre de tu proyecto/idea.");
       tituloRef.current?.focus();
       return;
     }
@@ -159,7 +181,7 @@ export default function App() {
     setSubmitting(true);
     try {
       await createIdea(newIdea);
-      await fetchUserIdeas(); // Refrescar lista con los datos de PostgreSQL
+      await fetchUserIdeas();
 
       setNewIdea({
         titulo: '',
@@ -168,7 +190,8 @@ export default function App() {
         tiempo: '2 a 4 semanas',
         detalles: ''
       });
-      alert(`✨ ¡Idea enviada exitosamente al panel de ${user.empresa || user.company}!`);
+      createModalRef.current?.close();
+      alert(`¡Idea enviada exitosamente al panel de ${user.empresa || user.company}!`);
     } catch (error) {
       alert(`Error al guardar la idea: ${error.message}`);
     } finally {
@@ -176,7 +199,7 @@ export default function App() {
     }
   };
 
-  // 5. Eliminar Idea de la Base de Datos
+  // 5. Eliminar Idea
   const handleDeleteIdea = async (id) => {
     if (!confirm("¿Deseas eliminar esta cotización de la base de datos?")) return;
 
@@ -187,6 +210,11 @@ export default function App() {
       alert(`Error al eliminar: ${error.message}`);
     }
   };
+
+  // Filtrado de ideas por categorías / estados actualizados
+  const ideasEnRevision = userIdeas.filter(item => !item.estado || item.estado === 'en_revision' || item.estado === 'En revisión' || item.estado === 'revision');
+  const ideasAceptadas = userIdeas.filter(item => item.estado === 'aceptada');
+  const ideasRechazadas = userIdeas.filter(item => item.estado === 'rechazada');
 
   return (
     <>
@@ -206,16 +234,27 @@ export default function App() {
           </ul>
 
           <nav className="flex items-center gap-3">
-            {/* BOTÓN 1: CREAR IDEA (Reemplaza a Cotizar Idea, con la misma función y estilo del panel) */}
+            {/* BOTÓN CREAR IDEA */}
             <button
-              onClick={openIdeasPanel}
+              onClick={openCreatePanel}
               className="hidden sm:flex items-center gap-2 bg-gradient-to-r from-purple-600 via-fuchsia-600 to-cyan-500 hover:from-purple-500 hover:to-cyan-400 text-white px-5 py-2.5 rounded-full font-bold text-sm transition-all shadow-[0_0_20px_rgba(168,85,247,0.5)] cursor-pointer"
             >
               <FileText className="w-4 h-4" />
               Crear Idea
             </button>
 
-            {/* BOTÓN 2: PORTAL DE EMPRESA / LOGIN */}
+            {/* BOTÓN DE ADMIN (Aparece si el usuario logueado es administrador) */}
+            {user?.isAdmin && (
+              <button
+                onClick={() => setIsAdminOpen(true)}
+                className="flex items-center gap-2 bg-gradient-to-r from-amber-500 via-orange-500 to-red-600 text-white px-5 py-2.5 rounded-full font-bold text-sm shadow-[0_0_20px_rgba(245,158,11,0.5)] cursor-pointer animate-pulse"
+              >
+                <ShieldAlert className="w-4 h-4" />
+                Panel Admin
+              </button>
+            )}
+
+            {/* ACCESO A EMPRESA / LOGIN */}
             <button
               onClick={openPortalEmpresa}
               className="flex items-center gap-2 bg-gradient-to-r from-purple-600 via-fuchsia-600 to-cyan-500 hover:from-purple-500 hover:to-cyan-400 text-white px-5 py-2.5 rounded-full font-bold transition-all shadow-[0_0_20px_rgba(168,85,247,0.5)] cursor-pointer"
@@ -248,11 +287,12 @@ export default function App() {
           </p>
 
           <nav className="flex flex-col sm:flex-row gap-5">
+            {/* BOTÓN HERO DINÁMICO: "Mi idea" si hay 1, "Mis ideas" si hay 2 o más */}
             <button
-              onClick={openIdeasPanel}
+              onClick={openHistoryPanel}
               className="flex items-center justify-center gap-3 bg-gradient-to-r from-purple-600 via-fuchsia-600 to-cyan-500 text-white px-8 py-4 rounded-full font-bold text-lg transition-all shadow-[0_0_30px_rgba(168,85,247,0.6)] hover:scale-105 active:scale-95 border border-purple-400/30 cursor-pointer"
             >
-              Mi idea
+              {userIdeas.length === 1 ? 'Mi idea' : 'Mis ideas'}
               <ArrowRight className="w-5 h-5" />
             </button>
           </nav>
@@ -327,22 +367,22 @@ export default function App() {
         </section>
       </footer>
 
-      {/* PANEL "MI IDEA" - MODAL */}
+      {/* 1. MODAL DE HISTORIAL ("Mi idea" / "Mis ideas") */}
       <dialog
-        ref={modalRef}
+        ref={historyModalRef}
         className="backdrop:bg-black/85 bg-zinc-900/95 text-white p-6 sm:p-8 rounded-3xl border border-purple-500/50 max-w-2xl w-full shadow-[0_0_50px_rgba(168,85,247,0.4)] backdrop-blur-2xl"
       >
         <header className="flex justify-between items-center mb-6 border-b border-purple-900/40 pb-4">
           <h3 className="text-2xl font-bold flex items-center gap-2">
             <FolderKanban className="w-6 h-6 text-purple-400" />
-            Panel de Ideas
+            Historial de Ideas
           </h3>
-          <button onClick={closeModal} className="text-zinc-400 hover:text-white cursor-pointer">
+          <button onClick={() => historyModalRef.current?.close()} className="text-zinc-400 hover:text-white cursor-pointer">
             <X className="w-6 h-6" />
           </button>
         </header>
 
-        {/* DATOS DE LA EMPRESA AUTENTICADA Y CONTADOR "X Ideas" */}
+        {/* DATOS DE LA EMPRESA */}
         {user && (
           <aside className="mb-6 p-4 rounded-2xl bg-purple-950/40 border border-purple-500/30 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -357,7 +397,7 @@ export default function App() {
 
             <div className="flex items-center gap-3">
               <span className="text-xs bg-purple-900/60 text-purple-300 px-3 py-1 rounded-full border border-purple-500/30">
-                {userIdeas.length} Ideas
+                {userIdeas.length} {userIdeas.length === 1 ? 'Idea' : 'Ideas'}
               </span>
               <button
                 onClick={handleLogout}
@@ -370,36 +410,28 @@ export default function App() {
           </aside>
         )}
 
-        {/* LISTA DE IDEAS CON LA ETIQUETA "Idea registrada exitosamente" */}
-        <section className="mb-8">
+        {/* SECCIÓN 1: IDEAS EN REVISIÓN */}
+        <section className="mb-6">
           <h4 className="text-sm font-bold text-zinc-300 mb-3 flex items-center gap-2">
-            <Clock className="w-4 h-4 text-cyan-400" /> Mis Ideas en la Base de Datos
+            <Clock className="w-4 h-4 text-amber-400" /> Ideas en Revisión
           </h4>
-          <div className="space-y-3 max-h-52 overflow-y-auto pr-1">
+          <div className="space-y-3 max-h-40 overflow-y-auto pr-1">
             {loadingIdeas ? (
-              <p className="text-xs text-zinc-400 py-4 text-center">Cargando ideas desde PostgreSQL...</p>
-            ) : userIdeas.length === 0 ? (
-              <div className="text-center py-6 border border-dashed border-purple-900/40 rounded-xl">
-                <p className="text-xs text-zinc-400">No tienes ideas guardadas en tu cuenta.</p>
-              </div>
+              <p className="text-xs text-zinc-400 py-3 text-center">Cargando...</p>
+            ) : ideasEnRevision.length === 0 ? (
+              <p className="text-xs text-zinc-500 py-2 italic">No hay ideas en proceso de revisión actualmente.</p>
             ) : (
-              userIdeas.map(item => (
-                <article key={item.id} className="p-4 rounded-xl bg-zinc-950 border border-purple-900/40 flex items-center justify-between">
+              ideasEnRevision.map(item => (
+                <article key={item.id} className="p-4 rounded-xl bg-zinc-950 border border-amber-900/40 flex items-center justify-between">
                   <nav>
                     <h5 className="font-bold text-white text-sm">{item.titulo}</h5>
                     <p className="text-xs text-zinc-400">{item.servicio} • <span className="text-purple-300">{item.presupuesto}</span></p>
                   </nav>
-
                   <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-md bg-purple-950 text-purple-300 border border-purple-500/30">
-                      <CheckCircle2 className="w-3 h-3 text-cyan-400" />
-                      Idea registrada exitosamente
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-md bg-amber-950 text-amber-300 border border-amber-500/30">
+                      En revisión
                     </span>
-                    <button
-                      onClick={() => handleDeleteIdea(item.id)}
-                      className="text-zinc-500 hover:text-red-400 p-1 transition"
-                      title="Eliminar de la BD"
-                    >
+                    <button onClick={() => handleDeleteIdea(item.id)} className="text-zinc-500 hover:text-red-400 p-1 transition" title="Eliminar">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -409,12 +441,81 @@ export default function App() {
           </div>
         </section>
 
-        {/* FORMULARIO CON BOTÓN "Enviar idea para revisión" */}
-        <form onSubmit={handleSaveIdea} className="space-y-4 border-t border-purple-900/40 pt-6">
-          <h4 className="text-sm font-bold text-zinc-200 flex items-center gap-2">
-            <PlusCircle className="w-4 h-4 text-purple-400" /> Guardar Nueva Idea
+        {/* SECCIÓN 2: IDEAS ACEPTADAS */}
+        <section className="mb-6">
+          <h4 className="text-sm font-bold text-zinc-300 mb-3 flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Ideas Aceptadas
           </h4>
+          <div className="space-y-3 max-h-40 overflow-y-auto pr-1">
+            {ideasAceptadas.length === 0 ? (
+              <p className="text-xs text-zinc-500 py-2 italic">Aún no hay ideas aceptadas.</p>
+            ) : (
+              ideasAceptadas.map(item => (
+                <article key={item.id} className="p-4 rounded-xl bg-zinc-950 border border-emerald-900/40 flex items-center justify-between">
+                  <nav>
+                    <h5 className="font-bold text-white text-sm">{item.titulo}</h5>
+                    <p className="text-xs text-zinc-400">{item.servicio} • <span className="text-purple-300">{item.presupuesto}</span></p>
+                  </nav>
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-md bg-emerald-950 text-emerald-300 border border-emerald-500/30">
+                      ✨ Idea aceptada
+                    </span>
+                    <button onClick={() => handleDeleteIdea(item.id)} className="text-zinc-500 hover:text-red-400 p-1 transition" title="Eliminar">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </article>
+              ))
+            )}
+          </div>
+        </section>
 
+        {/* SECCIÓN 3: IDEAS RECHAZADAS */}
+        <section className="mb-2">
+          <h4 className="text-sm font-bold text-zinc-300 mb-3 flex items-center gap-2">
+            <XCircle className="w-4 h-4 text-red-400" /> Ideas Rechazadas
+          </h4>
+          <div className="space-y-3 max-h-40 overflow-y-auto pr-1">
+            {ideasRechazadas.length === 0 ? (
+              <p className="text-xs text-zinc-500 py-2 italic">No hay ideas rechazadas.</p>
+            ) : (
+              ideasRechazadas.map(item => (
+                <article key={item.id} className="p-4 rounded-xl bg-zinc-950 border border-red-900/40 flex items-center justify-between">
+                  <nav>
+                    <h5 className="font-bold text-white text-sm">{item.titulo}</h5>
+                    <p className="text-xs text-zinc-400">{item.servicio} • <span className="text-purple-300">{item.presupuesto}</span></p>
+                  </nav>
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-md bg-red-950 text-red-300 border border-red-500/30">
+                      ❌ Idea rechazada
+                    </span>
+                    <button onClick={() => handleDeleteIdea(item.id)} className="text-zinc-500 hover:text-red-400 p-1 transition" title="Eliminar">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </article>
+              ))
+            )}
+          </div>
+        </section>
+      </dialog>
+
+      {/* 2. MODAL EXCLUSIVO DE CREACIÓN ("Crear Idea" en el Navbar) */}
+      <dialog
+        ref={createModalRef}
+        className="backdrop:bg-black/85 bg-zinc-900/95 text-white p-6 sm:p-8 rounded-3xl border border-purple-500/50 max-w-lg w-full shadow-[0_0_50px_rgba(168,85,247,0.4)] backdrop-blur-2xl"
+      >
+        <header className="flex justify-between items-center mb-6 border-b border-purple-900/40 pb-4">
+          <h3 className="text-2xl font-bold flex items-center gap-2">
+            <PlusCircle className="w-6 h-6 text-purple-400" />
+            Crear Nueva Idea
+          </h3>
+          <button onClick={() => createModalRef.current?.close()} className="text-zinc-400 hover:text-white cursor-pointer">
+            <X className="w-6 h-6" />
+          </button>
+        </header>
+
+        <form onSubmit={handleSaveIdea} className="space-y-4">
           <label className="block">
             <span className="text-xs font-medium text-zinc-300 mb-1 block">Nombre de tu proyecto/idea</span>
             <input
@@ -427,35 +528,33 @@ export default function App() {
             />
           </label>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <label className="block">
-              <span className="text-xs font-medium text-zinc-300 mb-1 block">Servicio requerido</span>
-              <select
-                value={newIdea.servicio}
-                onChange={(e) => setNewIdea({ ...newIdea, servicio: e.target.value })}
-                className="w-full bg-zinc-950 border border-purple-900/60 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-400 cursor-pointer"
-              >
-                <option>Desarrollo Web & UI/UX</option>
-                <option>Identidad de Marca & Branding</option>
-                <option>Producción Audiovisual / 3D</option>
-                <option>Estrategia Digital & Ads</option>
-              </select>
-            </label>
+          <label className="block">
+            <span className="text-xs font-medium text-zinc-300 mb-1 block">Servicio requerido</span>
+            <select
+              value={newIdea.servicio}
+              onChange={(e) => setNewIdea({ ...newIdea, servicio: e.target.value })}
+              className="w-full bg-zinc-950 border border-purple-900/60 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-400 cursor-pointer"
+            >
+              <option>Desarrollo Web & UI/UX</option>
+              <option>Identidad de Marca & Branding</option>
+              <option>Producción Audiovisual / 3D</option>
+              <option>Estrategia Digital & Ads</option>
+            </select>
+          </label>
 
-            <label className="block">
-              <span className="text-xs font-medium text-zinc-300 mb-1 block">Presupuesto estimado</span>
-              <select
-                value={newIdea.presupuesto}
-                onChange={(e) => setNewIdea({ ...newIdea, presupuesto: e.target.value })}
-                className="w-full bg-zinc-950 border border-purple-900/60 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-400 cursor-pointer"
-              >
-                <option>$500 - $1,000 USD</option>
-                <option>$1,000 - $2,500 USD</option>
-                <option>$2,500 - $5,000 USD</option>
-                <option>Más de $5,000 USD</option>
-              </select>
-            </label>
-          </div>
+          <label className="block">
+            <span className="text-xs font-medium text-zinc-300 mb-1 block">Presupuesto estimado</span>
+            <select
+              value={newIdea.presupuesto}
+              onChange={(e) => setNewIdea({ ...newIdea, presupuesto: e.target.value })}
+              className="w-full bg-zinc-950 border border-purple-900/60 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-400 cursor-pointer"
+            >
+              <option>$500 - $1,000 USD</option>
+              <option>$1,000 - $2,500 USD</option>
+              <option>$2,500 - $5,000 USD</option>
+              <option>Más de $5,000 USD</option>
+            </select>
+          </label>
 
           <footer className="pt-2">
             <button
@@ -470,11 +569,17 @@ export default function App() {
         </form>
       </dialog>
 
-      {/* MODAL DE REGISTRO / AUTENTICACIÓN (Portal de Empresa) */}
+      {/* MODAL DE AUTENTICACIÓN */}
       <AuthModal
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
         onLoginSuccess={handleLoginSuccess}
+      />
+
+      {/* PANEL DE ADMINISTRADOR */}
+      <AdminPanel
+        isOpen={isAdminOpen}
+        onClose={() => setIsAdminOpen(false)}
       />
     </>
   );
