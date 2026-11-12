@@ -13,7 +13,6 @@ import {
   Menu,
   User,
   Building2,
-  PlusCircle,
   Clock,
   CheckCircle2,
   XCircle,
@@ -22,7 +21,10 @@ import {
   Trash2,
   LogOut,
   ShieldAlert,
-  MessageSquare
+  MessageSquare,
+  Lightbulb,
+  PenTool,
+  Code2
 } from 'lucide-react';
 
 export default function App() {
@@ -44,7 +46,7 @@ export default function App() {
     titulo: '',
     servicio: 'Desarrollo Web & UI/UX',
     presupuesto: '$1,000 - $2,500 USD',
-    tiempo: '2 a 4 semanas',
+    tiempo: '1 - 3 Meses',
     detalles: ''
   });
 
@@ -106,7 +108,6 @@ export default function App() {
     try {
       const savedMsg = await sendUserMessage(ideaId, content);
 
-      // Actualiza el estado local al instante para mostrar la burbuja sin recargar
       setUserIdeas(prevIdeas =>
         prevIdeas.map(idea =>
           idea.id === ideaId
@@ -125,7 +126,7 @@ export default function App() {
 
   const services = [
     {
-      icon: <Palette className="w-8 h-8 text-purple-400" />,
+      icon: <Palette className="w-8 h-8 text-cyan-400" />,
       title: "Identidad de Marca & Branding",
       desc: "Diseño conceptual único, manuales de marca y estética visual memorable."
     },
@@ -135,12 +136,12 @@ export default function App() {
       desc: "Experiencias digitales intuitivas, rápidas y optimizadas sin sobrecarga de nodos."
     },
     {
-      icon: <Rocket className="w-8 h-8 text-fuchsia-400" />,
+      icon: <Rocket className="w-8 h-8 text-cyan-400" />,
       title: "Estrategia Digital & Ads",
       desc: "Campañas de alto impacto orientadas a conversión y posicionamiento de marca."
     },
     {
-      icon: <Layers className="w-8 h-8 text-violet-400" />,
+      icon: <Layers className="w-8 h-8 text-cyan-400" />,
       title: "Producción Audiovisual",
       desc: "Contenido 3D, motion graphics y material gráfico publicitario de nivel internacional."
     }
@@ -207,7 +208,7 @@ export default function App() {
         titulo: '',
         servicio: 'Desarrollo Web & UI/UX',
         presupuesto: '$1,000 - $2,500 USD',
-        tiempo: '2 a 4 semanas',
+        tiempo: '1 - 3 Meses',
         detalles: ''
       });
       createModalRef.current?.close();
@@ -240,19 +241,19 @@ export default function App() {
     const fallbackAdminMsg = item.mensajeAdmin || item.respuestaAdmin || item.comentarioAdmin;
 
     return (
-      <article key={item.id} className={`p-4 rounded-xl bg-zinc-950 border ${borderColor} flex flex-col gap-3`}>
+      <article key={item.id} className={`p-4 rounded-xl bg-[#090D16] border ${borderColor} flex flex-col gap-3`}>
         <div className="flex items-center justify-between">
           <nav>
-            <h5 className="font-bold text-white text-sm">{item.titulo}</h5>
-            <p className="text-xs text-zinc-400">
-              {item.servicio} • <span className="text-purple-300">{item.presupuesto}</span>
+            <h5 className="font-bold text-slate-50 text-sm">{item.titulo}</h5>
+            <p className="text-xs text-slate-400">
+              {item.servicio} • <span className="text-cyan-400 font-medium">{item.presupuesto}</span>
             </p>
           </nav>
           <div className="flex items-center gap-2">
             {badgeElement}
             <button
               onClick={() => handleDeleteIdea(item.id)}
-              className="text-zinc-500 hover:text-red-400 p-1 transition cursor-pointer"
+              className="text-slate-500 hover:text-red-400 p-1 transition cursor-pointer"
               title="Eliminar"
             >
               <Trash2 className="w-4 h-4" />
@@ -261,23 +262,23 @@ export default function App() {
         </div>
 
         {/* SECCIÓN DE CHAT BIDIRECCIONAL */}
-        <div className="mt-1 pt-3 border-t border-zinc-800/80 flex flex-col gap-2">
-          <span className="text-[11px] font-semibold text-zinc-400 flex items-center gap-1.5">
-            <MessageSquare className="w-3.5 h-3.5 text-purple-400" />
+        <div className="mt-1 pt-3 border-t border-slate-800 flex flex-col gap-2">
+          <span className="text-[11px] font-semibold text-slate-400 flex items-center gap-1.5">
+            <MessageSquare className="w-3.5 h-3.5 text-cyan-400" />
             Chat directo con NovaCreativa
           </span>
 
           {/* Lista de mensajes */}
           <div className="space-y-2 max-h-36 overflow-y-auto pr-1 flex flex-col">
             {messages.length === 0 && fallbackAdminMsg && (
-              <div className="p-2.5 rounded-lg bg-purple-950/40 border border-purple-500/30 text-xs self-start max-w-[85%]">
+              <div className="p-2.5 rounded-lg bg-cyan-950/40 border border-cyan-500/30 text-xs self-start max-w-[85%]">
                 <span className="font-bold text-cyan-300 block text-[10px]">NovaCreativa</span>
-                <p className="text-zinc-200">{fallbackAdminMsg}</p>
+                <p className="text-slate-200">{fallbackAdminMsg}</p>
               </div>
             )}
 
             {messages.length === 0 && !fallbackAdminMsg ? (
-              <p className="text-[11px] text-zinc-600 italic py-1">
+              <p className="text-[11px] text-slate-500 italic py-1">
                 Aún no hay mensajes. Escribe si deseas agregar detalles o consultar sobre tu proyecto.
               </p>
             ) : (
@@ -287,11 +288,11 @@ export default function App() {
                   <div
                     key={msg.id}
                     className={`p-2.5 rounded-xl text-xs max-w-[85%] ${isMine
-                      ? 'bg-purple-600/30 border border-purple-500/40 text-white self-end text-right'
-                      : 'bg-zinc-900 border border-cyan-500/30 text-zinc-200 self-start'
+                      ? 'bg-cyan-600/20 border border-cyan-500/40 text-slate-50 self-end text-right'
+                      : 'bg-slate-900 border border-slate-700 text-slate-200 self-start'
                       }`}
                   >
-                    <span className={`block text-[10px] font-bold mb-0.5 ${isMine ? 'text-purple-300' : 'text-cyan-400'}`}>
+                    <span className={`block text-[10px] font-bold mb-0.5 ${isMine ? 'text-cyan-300' : 'text-blue-400'}`}>
                       {isMine ? 'Tú' : 'NovaCreativa Admin'}
                     </span>
                     <p className="leading-relaxed break-words">{msg.content}</p>
@@ -308,12 +309,12 @@ export default function App() {
               placeholder="Escribe un mensaje al administrador..."
               value={replyTexts[item.id] || ''}
               onChange={(e) => setReplyTexts(prev => ({ ...prev, [item.id]: e.target.value }))}
-              className="flex-1 bg-zinc-900 border border-purple-900/50 rounded-lg px-3 py-2 text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-purple-400"
+              className="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-cyan-500"
             />
             <button
               type="submit"
               disabled={sendingReplyId === item.id || !(replyTexts[item.id]?.trim())}
-              className="bg-gradient-to-r from-purple-600 to-cyan-500 hover:from-purple-500 hover:to-cyan-400 text-white px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1 transition disabled:opacity-40 cursor-pointer"
+              className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1 transition disabled:opacity-40 cursor-pointer"
             >
               <Send className="w-3.5 h-3.5" />
             </button>
@@ -326,7 +327,7 @@ export default function App() {
   return (
     <>
       {/* NAVEGACIÓN PRINCIPAL CON LOGO OFICIAL */}
-      <header className="sticky top-0 z-40 backdrop-blur-xl bg-zinc-950/90 border-b border-purple-900/40">
+      <header className="sticky top-0 z-40 backdrop-blur-xl bg-[#090D16]/90 border-b border-slate-800/80">
         <nav className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <a href="#" className="flex items-center gap-3 group">
             <img
@@ -341,15 +342,16 @@ export default function App() {
             />
           </a>
 
-          <ul className="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-300">
-            <li><a href="#servicios" className="hover:text-purple-400 transition-colors">Servicios</a></li>
-            <li><a href="#portafolio" className="hover:text-purple-400 transition-colors">Portafolio</a></li>
+          <ul className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-300">
+            <li><a href="#servicios" className="hover:text-cyan-400 transition-colors">Servicios</a></li>
+            <li><a href="#proceso" className="hover:text-cyan-400 transition-colors">Proceso</a></li>
+            <li><a href="#portafolio" className="hover:text-cyan-400 transition-colors">Portafolio</a></li>
           </ul>
 
           <nav className="flex items-center gap-3">
             <button
               onClick={openCreatePanel}
-              className="hidden sm:flex items-center gap-2 bg-gradient-to-r from-purple-600 via-fuchsia-600 to-cyan-500 hover:from-purple-500 hover:to-cyan-400 text-white px-5 py-2.5 rounded-full font-bold text-sm transition-all shadow-[0_0_20px_rgba(168,85,247,0.5)] cursor-pointer"
+              className="hidden sm:flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-5 py-2.5 rounded-full font-bold text-sm transition-all shadow-[0_0_20px_rgba(6,182,212,0.3)] cursor-pointer"
             >
               <FileText className="w-4 h-4" />
               Crear Idea
@@ -358,91 +360,184 @@ export default function App() {
             {user?.isAdmin && (
               <button
                 onClick={() => setIsAdminOpen(true)}
-                className="flex items-center gap-2 bg-gradient-to-r from-amber-500 via-orange-500 to-red-600 text-white px-5 py-2.5 rounded-full font-bold text-sm shadow-[0_0_20px_rgba(245,158,11,0.5)] cursor-pointer animate-pulse"
+                className="flex items-center gap-2 bg-slate-800/90 hover:bg-slate-800 border border-slate-700 text-slate-200 px-5 py-2.5 rounded-full font-semibold text-sm transition-all cursor-pointer"
               >
-                <ShieldAlert className="w-4 h-4" />
+                <ShieldAlert className="w-4 h-4 text-amber-400" />
                 Panel Admin
               </button>
             )}
 
             <button
               onClick={openPortalEmpresa}
-              className="flex items-center gap-2 bg-gradient-to-r from-purple-600 via-fuchsia-600 to-cyan-500 hover:from-purple-500 hover:to-cyan-400 text-white px-5 py-2.5 rounded-full font-bold transition-all shadow-[0_0_20px_rgba(168,85,247,0.5)] cursor-pointer"
+              className="flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-5 py-2.5 rounded-full font-bold text-sm transition-all shadow-[0_0_20px_rgba(6,182,212,0.3)] cursor-pointer"
             >
               <User className="w-4 h-4" />
               {user ? `Panel: ${user.empresa || user.company}` : 'Acceso Empresa'}
             </button>
 
-            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="md:hidden text-zinc-300">
+            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="md:hidden text-slate-300 cursor-pointer">
               <Menu className="w-6 h-6" />
             </button>
           </nav>
         </nav>
+
+        {/* Menú desplegable móvil */}
+        {isMenuOpen && (
+          <div className="md:hidden bg-[#111827] border-b border-slate-800 px-6 py-4 space-y-3">
+            <a href="#servicios" onClick={() => setIsMenuOpen(false)} className="block text-sm text-slate-300 hover:text-cyan-400">Servicios</a>
+            <a href="#proceso" onClick={() => setIsMenuOpen(false)} className="block text-sm text-slate-300 hover:text-cyan-400">Proceso</a>
+            <a href="#portafolio" onClick={() => setIsMenuOpen(false)} className="block text-sm text-slate-300 hover:text-cyan-400">Portafolio</a>
+            <button
+              onClick={() => { setIsMenuOpen(false); openCreatePanel(); }}
+              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-4 py-2.5 rounded-xl font-bold text-sm"
+            >
+              <FileText className="w-4 h-4" /> Crear Idea
+            </button>
+          </div>
+        )}
       </header>
 
-      {/* HERO */}
-      <main className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-purple-500 selection:text-white">
-        <section className="relative max-w-7xl mx-auto px-6 pt-24 pb-20 flex flex-col items-center text-center">
-          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-950/80 border border-purple-500/50 text-purple-300 text-xs font-semibold uppercase tracking-widest mb-8 shadow-[0_0_15px_rgba(168,85,247,0.3)]">
-            <img src="/images/nova-logo.png" alt="" className="w-4 h-4 object-contain" />
-            Estudio de Diseño & Desarrollo Digital
-          </span>
+      {/* CONTENIDO PRINCIPAL */}
+      <main className="min-h-screen bg-[#090D16] text-slate-50 selection:bg-cyan-500 selection:text-slate-950">
+        {/* HERO CON FONDO ATMOSFÉRICO */}
+        <section className="relative overflow-hidden border-b border-slate-800/60">
+          {/* Cuadrícula tecnológica tenue */}
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-25 pointer-events-none" />
+          {/* Resplandor central Cian */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-cyan-500/15 blur-[120px] rounded-full pointer-events-none" />
 
-          <h1 className="text-5xl md:text-7xl font-black tracking-tight max-w-4xl leading-tight mb-8">
-            <span className="bg-gradient-to-r from-purple-400 via-fuchsia-400 to-cyan-400 bg-clip-text text-transparent drop-shadow-[0_0_35px_rgba(168,85,247,0.4)]">Diseñamos el futuro.</span>
-          </h1>
+          <div className="relative max-w-7xl mx-auto px-6 pt-28 pb-24 flex flex-col items-center text-center">
+            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-950/60 border border-cyan-500/30 text-cyan-300 text-xs font-semibold uppercase tracking-widest mb-8 shadow-[0_0_20px_rgba(6,182,212,0.15)]">
+              <img src="/images/nova-logo.png" alt="" className="w-4 h-4 object-contain" />
+              Estudio de Diseño & Desarrollo Digital
+            </span>
 
-          <p className="text-lg md:text-xl text-zinc-400 max-w-2xl mb-10 leading-relaxed">
-            Potencia tu marca con tecnología de vanguardia y diseño disruptivo.
-          </p>
+            <h1 className="text-5xl md:text-7xl font-black tracking-tight max-w-4xl leading-tight mb-8 text-slate-50">
+              Diseñamos el{" "}
+              <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+                futuro.
+              </span>
+            </h1>
 
-          <nav className="flex flex-col sm:flex-row gap-5">
-            <button
-              onClick={openHistoryPanel}
-              className="flex items-center justify-center gap-3 bg-gradient-to-r from-purple-600 via-fuchsia-600 to-cyan-500 text-white px-8 py-4 rounded-full font-bold text-lg transition-all shadow-[0_0_30px_rgba(168,85,247,0.6)] hover:scale-105 active:scale-95 border border-purple-400/30 cursor-pointer"
-            >
-              {userIdeas.length === 1 ? 'Mi idea' : 'Mis ideas'}
-              <ArrowRight className="w-5 h-5" />
-            </button>
-          </nav>
+            <p className="text-lg md:text-xl text-slate-400 max-w-2xl mb-10 leading-relaxed">
+              Potencia tu marca con tecnología de vanguardia y diseño disruptivo.
+            </p>
+
+            <nav className="flex flex-col sm:flex-row gap-4">
+              <button
+                onClick={openHistoryPanel}
+                className="flex items-center justify-center gap-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-8 py-4 rounded-full font-bold text-lg transition-all shadow-[0_0_30px_rgba(6,182,212,0.35)] hover:scale-105 active:scale-95 border border-cyan-400/30 cursor-pointer"
+              >
+                {userIdeas.length === 1 ? 'Mi idea' : 'Mis ideas'}
+                <ArrowRight className="w-5 h-5" />
+              </button>
+            </nav>
+          </div>
         </section>
 
         {/* SERVICIOS */}
-        <section id="servicios" className="py-24 bg-zinc-900/40 border-y border-purple-900/40">
+        <section id="servicios" className="py-24 bg-[#111827]/40 border-b border-slate-800/80">
           <header className="max-w-7xl mx-auto px-6 text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold mb-4">Lo Que Hacemos</h2>
-            <p className="text-zinc-400 max-w-xl mx-auto">Soluciones integrales para escalar tu negocio.</p>
+            <h2 className="text-3xl md:text-5xl font-bold mb-4 text-slate-50">Lo Que Hacemos</h2>
+            <p className="text-slate-400 max-w-xl mx-auto">Soluciones integrales para escalar tu negocio.</p>
           </header>
 
           <section className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {services.map((s, idx) => (
-              <article key={idx} className="bg-zinc-900/80 border border-purple-900/40 p-8 rounded-2xl hover:border-purple-500/60 transition-all hover:-translate-y-1 hover:shadow-[0_0_25px_rgba(168,85,247,0.2)]">
-                <header className="mb-6 p-3 w-fit rounded-xl bg-purple-950/60 border border-purple-500/30">
+              <article key={idx} className="bg-[#111827] border border-slate-800 p-8 rounded-2xl hover:border-cyan-500/50 transition-all hover:-translate-y-1 hover:shadow-[0_0_25px_rgba(6,182,212,0.12)]">
+                <header className="mb-6 p-3 w-fit rounded-xl bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-cyan-500/20">
                   {s.icon}
                 </header>
-                <h3 className="text-xl font-bold mb-3 text-white">{s.title}</h3>
-                <p className="text-zinc-400 text-sm leading-relaxed">{s.desc}</p>
+                <h3 className="text-xl font-bold mb-3 text-slate-50">{s.title}</h3>
+                <p className="text-slate-400 text-sm leading-relaxed">{s.desc}</p>
               </article>
             ))}
           </section>
+        </section>
+
+        {/* PROCESO DE TRABAJO (SOLO LOS 4 PASOS) */}
+        <section id="proceso" className="py-24 max-w-7xl mx-auto px-6 border-b border-slate-800/80">
+          <header className="text-center mb-16">
+            <span className="inline-block px-4 py-1.5 rounded-full bg-cyan-950/60 border border-cyan-500/30 text-cyan-300 text-xs font-semibold uppercase tracking-widest mb-4">
+              Nuestro Proceso de Trabajo
+            </span>
+            <h2 className="text-3xl md:text-5xl font-bold mb-4 text-slate-50">
+              Cómo Transformamos Ideas en Realidad
+            </h2>
+            <p className="text-slate-400 max-w-2xl mx-auto">
+              Un flujo de trabajo claro, eficiente y colaborativo para materializar tus proyectos.
+            </p>
+          </header>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              {
+                num: "01",
+                icon: <Lightbulb className="w-5 h-5 text-cyan-400" />,
+                title: "1. Descubrimiento y Estrategia",
+                desc: "Entendemos tu visión, analizamos el mercado y definimos el camino para el éxito."
+              },
+              {
+                num: "02",
+                icon: <PenTool className="w-5 h-5 text-cyan-400" />,
+                title: "2. Diseño y Conceptualización",
+                desc: "Creamos mockups, interfaces de usuario y experiencias atractivas y modernas."
+              },
+              {
+                num: "03",
+                icon: <Code2 className="w-5 h-5 text-cyan-400" />,
+                title: "3. Desarrollo y Pruebas",
+                desc: "Programamos y refinamos el código de tu sitio usando tecnología de punta."
+              },
+              {
+                num: "04",
+                icon: <Rocket className="w-5 h-5 text-cyan-400" />,
+                title: "4. Entrega y Soporte",
+                desc: "Lanzamos el producto final y brindamos optimización continua con soporte constante."
+              }
+            ].map((step) => (
+              <article
+                key={step.num}
+                className="group bg-[#111827] border border-slate-800 p-7 rounded-2xl hover:border-cyan-500/60 transition-all hover:-translate-y-1 hover:shadow-[0_0_25px_rgba(6,182,212,0.15)] flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-6">
+                    <span className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 text-white font-black text-base shadow-[0_0_15px_rgba(6,182,212,0.3)]">
+                      {step.num}
+                    </span>
+                    <div className="p-2.5 rounded-xl bg-[#090D16] border border-slate-800 group-hover:border-cyan-500/40 transition-colors">
+                      {step.icon}
+                    </div>
+                  </div>
+
+                  <h3 className="text-lg font-bold text-slate-50 mb-3 leading-snug">
+                    {step.title}
+                  </h3>
+                  <p className="text-slate-400 text-sm leading-relaxed">
+                    {step.desc}
+                  </p>
+                </div>
+              </article>
+            ))}
+          </div>
         </section>
 
         {/* PORTAFOLIO */}
         <section id="portafolio" className="py-24 max-w-7xl mx-auto px-6">
           <header className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
             <nav>
-              <h2 className="text-3xl md:text-5xl font-bold mb-4">Proyectos Destacados</h2>
-              <p className="text-zinc-400">Explora nuestro trabajo.</p>
+              <h2 className="text-3xl md:text-5xl font-bold mb-4 text-slate-50">Proyectos Destacados</h2>
+              <p className="text-slate-400">Explora nuestro trabajo.</p>
             </nav>
 
-            <nav className="flex gap-2 bg-zinc-900 p-1.5 rounded-xl border border-purple-900/40">
+            <nav className="flex gap-2 bg-[#111827] p-1.5 rounded-xl border border-slate-800">
               {['Todos', 'Branding', 'Web', '3D & Motion'].map(cat => (
                 <button
                   key={cat}
                   onClick={() => setActiveFilter(cat)}
                   className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${activeFilter === cat
-                    ? 'bg-gradient-to-r from-purple-600 to-cyan-500 text-white shadow-[0_0_15px_rgba(168,85,247,0.5)]'
-                    : 'text-zinc-400 hover:text-white'
+                    ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-[0_0_15px_rgba(6,182,212,0.35)]'
+                    : 'text-slate-400 hover:text-slate-50'
                     }`}
                 >
                   {cat}
@@ -453,14 +548,14 @@ export default function App() {
 
           <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {filteredProjects.map(proj => (
-              <article key={proj.id} className="group relative overflow-hidden rounded-2xl border border-purple-900/40 bg-zinc-900/60 hover:border-purple-500/60 transition-all">
+              <article key={proj.id} className="group relative overflow-hidden rounded-2xl border border-slate-800 bg-[#111827] hover:border-cyan-500/50 transition-all">
                 <figure className="aspect-video overflow-hidden">
                   <img src={proj.image} alt={proj.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 </figure>
-                <footer className="p-6 flex items-center justify-between border-t border-purple-900/40 bg-zinc-900/90">
+                <footer className="p-6 flex items-center justify-between border-t border-slate-800 bg-[#111827]">
                   <nav>
-                    <span className="text-xs font-bold text-purple-400 uppercase tracking-wider">{proj.category}</span>
-                    <h3 className="text-xl font-bold text-white mt-1">{proj.title}</h3>
+                    <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider">{proj.category}</span>
+                    <h3 className="text-xl font-bold text-slate-50 mt-1">{proj.title}</h3>
                   </nav>
                 </footer>
               </article>
@@ -470,8 +565,8 @@ export default function App() {
       </main>
 
       {/* FOOTER */}
-      <footer className="bg-zinc-950 border-t border-purple-900/40 py-12">
-        <section className="max-w-7xl mx-auto px-6 text-center text-sm text-zinc-400">
+      <footer className="bg-[#090D16] border-t border-slate-800/80 py-12">
+        <section className="max-w-7xl mx-auto px-6 text-center text-sm text-slate-400">
           <p>© 2026 NovaCreativa. Todos los derechos reservados.</p>
         </section>
       </footer>
@@ -479,37 +574,37 @@ export default function App() {
       {/* 1. MODAL DE HISTORIAL CON CHAT BIDIRECCIONAL */}
       <dialog
         ref={historyModalRef}
-        className="backdrop:bg-black/85 bg-zinc-900/95 text-white p-6 sm:p-8 rounded-3xl border border-purple-500/50 max-w-2xl w-full shadow-[0_0_50px_rgba(168,85,247,0.4)] backdrop-blur-2xl"
+        className="backdrop:bg-black/80 bg-[#111827] text-slate-50 p-6 sm:p-8 rounded-3xl border border-slate-800 max-w-2xl w-full shadow-[0_0_50px_rgba(6,182,212,0.15)] backdrop-blur-2xl"
       >
-        <header className="flex justify-between items-center mb-6 border-b border-purple-900/40 pb-4">
+        <header className="flex justify-between items-center mb-6 border-b border-slate-800 pb-4">
           <h3 className="text-2xl font-bold flex items-center gap-2">
-            <FolderKanban className="w-6 h-6 text-purple-400" />
+            <FolderKanban className="w-6 h-6 text-cyan-400" />
             Historial de Ideas
           </h3>
-          <button onClick={() => historyModalRef.current?.close()} className="text-zinc-400 hover:text-white cursor-pointer">
+          <button onClick={() => historyModalRef.current?.close()} className="text-slate-400 hover:text-slate-50 cursor-pointer">
             <X className="w-6 h-6" />
           </button>
         </header>
 
         {user && (
-          <aside className="mb-6 p-4 rounded-2xl bg-purple-950/40 border border-purple-500/30 flex items-center justify-between">
+          <aside className="mb-6 p-4 rounded-2xl bg-[#090D16] border border-slate-800 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-purple-900/50 border border-purple-400/40 text-purple-300">
+              <div className="p-2.5 rounded-xl bg-cyan-950/60 border border-cyan-500/30 text-cyan-400">
                 <Building2 className="w-5 h-5" />
               </div>
               <nav>
-                <span className="text-xs text-purple-300 font-semibold uppercase tracking-wider">Empresa Registrada</span>
-                <h4 className="text-base font-bold text-white">{user.empresa || user.company}</h4>
+                <span className="text-xs text-cyan-400 font-semibold uppercase tracking-wider">Empresa Registrada</span>
+                <h4 className="text-base font-bold text-slate-50">{user.empresa || user.company}</h4>
               </nav>
             </div>
 
             <div className="flex items-center gap-3">
-              <span className="text-xs bg-purple-900/60 text-purple-300 px-3 py-1 rounded-full border border-purple-500/30">
+              <span className="text-xs bg-cyan-950/60 text-cyan-300 px-3 py-1 rounded-full border border-cyan-500/30">
                 {userIdeas.length} {userIdeas.length === 1 ? 'Idea' : 'Ideas'}
               </span>
               <button
                 onClick={handleLogout}
-                className="text-zinc-400 hover:text-red-400 transition cursor-pointer"
+                className="text-slate-400 hover:text-red-400 transition cursor-pointer"
                 title="Cerrar sesión"
               >
                 <LogOut className="w-4 h-4" />
@@ -520,20 +615,20 @@ export default function App() {
 
         {/* SECCIÓN 1: IDEAS EN REVISIÓN */}
         <section className="mb-6">
-          <h4 className="text-sm font-bold text-zinc-300 mb-3 flex items-center gap-2">
+          <h4 className="text-sm font-bold text-slate-300 mb-3 flex items-center gap-2">
             <Clock className="w-4 h-4 text-amber-400" /> Ideas en Revisión
           </h4>
           <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
             {loadingIdeas ? (
-              <p className="text-xs text-zinc-400 py-3 text-center">Cargando...</p>
+              <p className="text-xs text-slate-400 py-3 text-center">Cargando...</p>
             ) : ideasEnRevision.length === 0 ? (
-              <p className="text-xs text-zinc-500 py-2 italic">No hay ideas en proceso de revisión actualmente.</p>
+              <p className="text-xs text-slate-500 py-2 italic">No hay ideas en proceso de revisión actualmente.</p>
             ) : (
               ideasEnRevision.map(item =>
                 renderIdeaCard(
                   item,
-                  'border-amber-900/40',
-                  <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-md bg-amber-950 text-amber-300 border border-amber-500/30">
+                  'border-amber-500/30',
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-md bg-amber-950/60 text-amber-300 border border-amber-500/30">
                     En revisión
                   </span>
                 )
@@ -544,18 +639,18 @@ export default function App() {
 
         {/* SECCIÓN 2: IDEAS ACEPTADAS */}
         <section className="mb-6">
-          <h4 className="text-sm font-bold text-zinc-300 mb-3 flex items-center gap-2">
+          <h4 className="text-sm font-bold text-slate-300 mb-3 flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Ideas Aceptadas
           </h4>
           <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
             {ideasAceptadas.length === 0 ? (
-              <p className="text-xs text-zinc-500 py-2 italic">Aún no hay ideas aceptadas.</p>
+              <p className="text-xs text-slate-500 py-2 italic">Aún no hay ideas aceptadas.</p>
             ) : (
               ideasAceptadas.map(item =>
                 renderIdeaCard(
                   item,
-                  'border-emerald-900/40',
-                  <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-md bg-emerald-950 text-emerald-300 border border-emerald-500/30">
+                  'border-emerald-500/30',
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-md bg-emerald-950/60 text-emerald-300 border border-emerald-500/30">
                     ✨ Idea aceptada
                   </span>
                 )
@@ -566,18 +661,18 @@ export default function App() {
 
         {/* SECCIÓN 3: IDEAS RECHAZADAS */}
         <section className="mb-2">
-          <h4 className="text-sm font-bold text-zinc-300 mb-3 flex items-center gap-2">
+          <h4 className="text-sm font-bold text-slate-300 mb-3 flex items-center gap-2">
             <XCircle className="w-4 h-4 text-red-400" /> Ideas Rechazadas
           </h4>
           <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
             {ideasRechazadas.length === 0 ? (
-              <p className="text-xs text-zinc-500 py-2 italic">No hay ideas rechazadas.</p>
+              <p className="text-xs text-slate-500 py-2 italic">No hay ideas rechazadas.</p>
             ) : (
               ideasRechazadas.map(item =>
                 renderIdeaCard(
                   item,
-                  'border-red-900/40',
-                  <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-md bg-red-950 text-red-300 border border-red-500/30">
+                  'border-red-500/30',
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-md bg-red-950/60 text-red-300 border border-red-500/30">
                     ❌ Idea rechazada
                   </span>
                 )
@@ -587,73 +682,131 @@ export default function App() {
         </section>
       </dialog>
 
-      {/* 2. MODAL DE CREACIÓN */}
+      {/* 2. MODAL DE CREACIÓN AMPLIADO */}
       <dialog
         ref={createModalRef}
-        className="backdrop:bg-black/85 bg-zinc-900/95 text-white p-6 sm:p-8 rounded-3xl border border-purple-500/50 max-w-lg w-full shadow-[0_0_50px_rgba(168,85,247,0.4)] backdrop-blur-2xl"
+        className="backdrop:bg-black/80 bg-transparent p-0 m-auto max-w-md w-full overflow-visible"
       >
-        <header className="flex justify-between items-center mb-6 border-b border-purple-900/40 pb-4">
-          <h3 className="text-2xl font-bold flex items-center gap-2">
-            <PlusCircle className="w-6 h-6 text-purple-400" />
-            Crear Nueva Idea
-          </h3>
-          <button onClick={() => createModalRef.current?.close()} className="text-zinc-400 hover:text-white cursor-pointer">
-            <X className="w-6 h-6" />
-          </button>
-        </header>
+        <div className="relative bg-[#0B1221] text-slate-50 p-6 sm:p-7 rounded-2xl border border-cyan-500/60 shadow-[0_0_45px_rgba(6,182,212,0.35)]">
 
-        <form onSubmit={handleSaveIdea} className="space-y-4">
-          <label className="block">
-            <span className="text-xs font-medium text-zinc-300 mb-1 block">Nombre de tu proyecto/idea</span>
-            <input
-              ref={tituloRef}
-              type="text"
-              placeholder="Ej. Plataforma E-Commerce Neón"
-              value={newIdea.titulo}
-              onChange={(e) => setNewIdea({ ...newIdea, titulo: e.target.value })}
-              className="w-full bg-zinc-950 border border-purple-900/60 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-400"
-            />
-          </label>
+          {/* Decoración de matriz de puntos cian */}
+          <div className="hidden sm:grid grid-cols-3 gap-1.5 absolute -top-6 right-8 pointer-events-none opacity-60">
+            {[...Array(6)].map((_, i) => (
+              <span key={i} className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+            ))}
+          </div>
+          <div className="hidden sm:grid grid-cols-3 gap-1.5 absolute -bottom-6 left-8 pointer-events-none opacity-60">
+            {[...Array(6)].map((_, i) => (
+              <span key={i} className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+            ))}
+          </div>
 
-          <label className="block">
-            <span className="text-xs font-medium text-zinc-300 mb-1 block">Servicio requerido</span>
-            <select
-              value={newIdea.servicio}
-              onChange={(e) => setNewIdea({ ...newIdea, servicio: e.target.value })}
-              className="w-full bg-zinc-950 border border-purple-900/60 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-400 cursor-pointer"
-            >
-              <option>Desarrollo Web & UI/UX</option>
-              <option>Identidad de Marca & Branding</option>
-              <option>Producción Audiovisual / 3D</option>
-              <option>Estrategia Digital & Ads</option>
-            </select>
-          </label>
-
-          <label className="block">
-            <span className="text-xs font-medium text-zinc-300 mb-1 block">Presupuesto estimado</span>
-            <select
-              value={newIdea.presupuesto}
-              onChange={(e) => setNewIdea({ ...newIdea, presupuesto: e.target.value })}
-              className="w-full bg-zinc-950 border border-purple-900/60 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-400 cursor-pointer"
-            >
-              <option>$500 - $1,000 USD</option>
-              <option>$1,000 - $2,500 USD</option>
-              <option>$2,500 - $5,000 USD</option>
-              <option>Más de $5,000 USD</option>
-            </select>
-          </label>
-
-          <footer className="pt-2">
+          {/* Cabecera del Modal */}
+          <header className="flex justify-between items-center mb-5 pb-3 border-b border-slate-800/80">
+            <h3 className="text-lg sm:text-xl font-bold flex items-center gap-2.5 text-slate-50">
+              <span className="p-1.5 rounded-lg bg-cyan-950/80 border border-cyan-500/40 text-cyan-400">
+                <FileText className="w-4 h-4" />
+              </span>
+              Crear Nueva Idea
+            </h3>
             <button
-              type="submit"
-              disabled={submitting}
-              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 via-fuchsia-600 to-cyan-500 hover:from-purple-500 hover:to-cyan-400 text-white font-bold py-3.5 rounded-xl shadow-[0_0_20px_rgba(168,85,247,0.5)] cursor-pointer disabled:opacity-50"
+              type="button"
+              onClick={() => createModalRef.current?.close()}
+              className="text-slate-400 hover:text-slate-50 transition-colors cursor-pointer p-1"
             >
-              {submitting ? 'Enviando...' : 'Enviar idea para revisión'}
-              <Send className="w-4 h-4" />
+              <X className="w-5 h-5" />
             </button>
-          </footer>
-        </form>
+          </header>
+
+          {/* Formulario apilado de 5 campos */}
+          <form onSubmit={handleSaveIdea} className="space-y-3.5">
+            <label className="block">
+              <span className="text-xs font-medium text-slate-300 mb-1.5 block">
+                Nombre de tu proyecto/idea
+              </span>
+              <input
+                ref={tituloRef}
+                type="text"
+                placeholder="Ej. Plataforma E-Commerce Neón"
+                value={newIdea.titulo}
+                onChange={(e) => setNewIdea({ ...newIdea, titulo: e.target.value })}
+                className="w-full bg-[#070B14] border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none focus:border-cyan-400 transition-colors"
+              />
+            </label>
+
+            <label className="block">
+              <span className="text-xs font-medium text-slate-300 mb-1.5 block">
+                Servicio requerido
+              </span>
+              <select
+                value={newIdea.servicio}
+                onChange={(e) => setNewIdea({ ...newIdea, servicio: e.target.value })}
+                className="w-full bg-[#070B14] border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-slate-50 focus:outline-none focus:border-cyan-400 cursor-pointer transition-colors"
+              >
+                <option>Desarrollo Web & UI/UX</option>
+                <option>Identidad de Marca & Branding</option>
+                <option>Producción Audiovisual / 3D</option>
+                <option>Estrategia Digital & Ads</option>
+              </select>
+            </label>
+
+            <label className="block">
+              <span className="text-xs font-medium text-slate-300 mb-1.5 block">
+                Presupuesto estimado
+              </span>
+              <select
+                value={newIdea.presupuesto}
+                onChange={(e) => setNewIdea({ ...newIdea, presupuesto: e.target.value })}
+                className="w-full bg-[#070B14] border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-slate-50 focus:outline-none focus:border-cyan-400 cursor-pointer transition-colors"
+              >
+                <option>$500 - $1,000 USD</option>
+                <option>$1,000 - $2,500 USD</option>
+                <option>$2,500 - $5,000 USD</option>
+                <option>Más de $5,000 USD</option>
+              </select>
+            </label>
+
+            <label className="block">
+              <span className="text-xs font-medium text-slate-300 mb-1.5 block">
+                Plazo estimado
+              </span>
+              <select
+                value={newIdea.tiempo}
+                onChange={(e) => setNewIdea({ ...newIdea, tiempo: e.target.value })}
+                className="w-full bg-[#070B14] border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-slate-50 focus:outline-none focus:border-cyan-400 cursor-pointer transition-colors"
+              >
+                <option>1 - 3 Meses</option>
+                <option>2 a 4 semanas</option>
+                <option>1 a 2 semanas</option>
+                <option>Flexible / Por definir</option>
+              </select>
+            </label>
+
+            <label className="block">
+              <span className="text-xs font-medium text-slate-300 mb-1.5 block">
+                Detalles del proyecto
+              </span>
+              <textarea
+                rows={3}
+                placeholder="Describe tu idea, objetivos y cualquier detalle importante..."
+                value={newIdea.detalles}
+                onChange={(e) => setNewIdea({ ...newIdea, detalles: e.target.value })}
+                className="w-full bg-[#070B14] border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none focus:border-cyan-400 resize-none transition-colors"
+              />
+            </label>
+
+            <footer className="pt-2">
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-cyan-400 to-blue-600 hover:from-cyan-300 hover:to-blue-500 text-slate-950 font-bold py-3 rounded-xl shadow-[0_0_25px_rgba(6,182,212,0.45)] transition-all cursor-pointer disabled:opacity-50"
+              >
+                {submitting ? 'Enviando...' : 'Enviar idea para revisión'}
+                <Send className="w-4 h-4" />
+              </button>
+            </footer>
+          </form>
+        </div>
       </dialog>
 
       <AuthModal
