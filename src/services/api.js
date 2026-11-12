@@ -60,3 +60,14 @@ export const deleteIdea = async (id) => {
   if (!res.ok) throw new Error(data.message || 'Error al eliminar la idea');
   return data;
 };
+
+export const sendUserMessage = async (ideaId, content) => {
+  const res = await fetch(`${API_URL}/ideas/${ideaId}/messages`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ content })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || 'Error al enviar el mensaje');
+  return data;
+};

@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import AuthModal from './components/AuthModal';
 import AdminPanel from './components/AdminPanel';
-import { createIdea, getMyIdeas, deleteIdea } from './services/api';
+import { createIdea, getMyIdeas, deleteIdea, sendUserMessage } from './services/api';
 import {
-  Sparkles,
   Palette,
   Globe,
   Rocket,
@@ -36,6 +35,10 @@ export default function App() {
   const [userIdeas, setUserIdeas] = useState([]);
   const [loadingIdeas, setLoadingIdeas] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  // Estados para el chat de cada idea en el modal del usuario
+  const [replyTexts, setReplyTexts] = useState({});
+  const [sendingReplyId, setSendingReplyId] = useState(null);
 
   const [newIdea, setNewIdea] = useState({
     titulo: '',
@@ -93,6 +96,33 @@ export default function App() {
     setIsAdminOpen(false);
   };
 
+  // Enviar respuesta del usuario hacia el Admin
+  const handleSendReply = async (e, ideaId) => {
+    e.preventDefault();
+    const content = replyTexts[ideaId]?.trim();
+    if (!content) return;
+
+    setSendingReplyId(ideaId);
+    try {
+      const savedMsg = await sendUserMessage(ideaId, content);
+
+      // Actualiza el estado local al instante para mostrar la burbuja sin recargar
+      setUserIdeas(prevIdeas =>
+        prevIdeas.map(idea =>
+          idea.id === ideaId
+            ? { ...idea, messages: [...(idea.messages || []), savedMsg] }
+            : idea
+        )
+      );
+
+      setReplyTexts(prev => ({ ...prev, [ideaId]: '' }));
+    } catch (error) {
+      alert(`Error al enviar respuesta: ${error.message}`);
+    } finally {
+      setSendingReplyId(null);
+    }
+  };
+
   const services = [
     {
       icon: <Palette className="w-8 h-8 text-purple-400" />,
@@ -143,7 +173,7 @@ export default function App() {
     if (!user) {
       setIsAuthOpen(true);
     } else {
-      fetchUserIdeas(); // Sincroniza los últimos mensajes del admin al abrir el historial
+      fetchUserIdeas();
       historyModalRef.current?.showModal();
     }
   };
@@ -204,19 +234,111 @@ export default function App() {
   const ideasAceptadas = userIdeas.filter(item => item.estado === 'aceptada');
   const ideasRechazadas = userIdeas.filter(item => item.estado === 'rechazada');
 
-  // Helper para extraer el mensaje del admin independientemente del nombre de columna en BD
-  const getAdminMessage = (item) => item.mensajeAdmin || item.respuestaAdmin || item.comentarioAdmin || item.comentario || item.notasAdmin;
+  // Renderizador reutilizable de tarjeta con historial de chat y caja de respuesta
+  const renderIdeaCard = (item, borderColor, badgeElement) => {
+    const messages = item.messages || [];
+    const fallbackAdminMsg = item.mensajeAdmin || item.respuestaAdmin || item.comentarioAdmin;
+
+    return (
+      <article key={item.id} className={`p-4 rounded-xl bg-zinc-950 border ${borderColor} flex flex-col gap-3`}>
+        <div className="flex items-center justify-between">
+          <nav>
+            <h5 className="font-bold text-white text-sm">{item.titulo}</h5>
+            <p className="text-xs text-zinc-400">
+              {item.servicio} • <span className="text-purple-300">{item.presupuesto}</span>
+            </p>
+          </nav>
+          <div className="flex items-center gap-2">
+            {badgeElement}
+            <button
+              onClick={() => handleDeleteIdea(item.id)}
+              className="text-zinc-500 hover:text-red-400 p-1 transition cursor-pointer"
+              title="Eliminar"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* SECCIÓN DE CHAT BIDIRECCIONAL */}
+        <div className="mt-1 pt-3 border-t border-zinc-800/80 flex flex-col gap-2">
+          <span className="text-[11px] font-semibold text-zinc-400 flex items-center gap-1.5">
+            <MessageSquare className="w-3.5 h-3.5 text-purple-400" />
+            Chat directo con NovaCreativa
+          </span>
+
+          {/* Lista de mensajes */}
+          <div className="space-y-2 max-h-36 overflow-y-auto pr-1 flex flex-col">
+            {messages.length === 0 && fallbackAdminMsg && (
+              <div className="p-2.5 rounded-lg bg-purple-950/40 border border-purple-500/30 text-xs self-start max-w-[85%]">
+                <span className="font-bold text-cyan-300 block text-[10px]">NovaCreativa</span>
+                <p className="text-zinc-200">{fallbackAdminMsg}</p>
+              </div>
+            )}
+
+            {messages.length === 0 && !fallbackAdminMsg ? (
+              <p className="text-[11px] text-zinc-600 italic py-1">
+                Aún no hay mensajes. Escribe si deseas agregar detalles o consultar sobre tu proyecto.
+              </p>
+            ) : (
+              messages.map(msg => {
+                const isMine = msg.senderId === user?.id;
+                return (
+                  <div
+                    key={msg.id}
+                    className={`p-2.5 rounded-xl text-xs max-w-[85%] ${isMine
+                      ? 'bg-purple-600/30 border border-purple-500/40 text-white self-end text-right'
+                      : 'bg-zinc-900 border border-cyan-500/30 text-zinc-200 self-start'
+                      }`}
+                  >
+                    <span className={`block text-[10px] font-bold mb-0.5 ${isMine ? 'text-purple-300' : 'text-cyan-400'}`}>
+                      {isMine ? 'Tú' : 'NovaCreativa Admin'}
+                    </span>
+                    <p className="leading-relaxed break-words">{msg.content}</p>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Input para responder al Admin */}
+          <form onSubmit={(e) => handleSendReply(e, item.id)} className="flex gap-2 mt-1">
+            <input
+              type="text"
+              placeholder="Escribe un mensaje al administrador..."
+              value={replyTexts[item.id] || ''}
+              onChange={(e) => setReplyTexts(prev => ({ ...prev, [item.id]: e.target.value }))}
+              className="flex-1 bg-zinc-900 border border-purple-900/50 rounded-lg px-3 py-2 text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-purple-400"
+            />
+            <button
+              type="submit"
+              disabled={sendingReplyId === item.id || !(replyTexts[item.id]?.trim())}
+              className="bg-gradient-to-r from-purple-600 to-cyan-500 hover:from-purple-500 hover:to-cyan-400 text-white px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1 transition disabled:opacity-40 cursor-pointer"
+            >
+              <Send className="w-3.5 h-3.5" />
+            </button>
+          </form>
+        </div>
+      </article>
+    );
+  };
 
   return (
     <>
-      {/* NAVEGACIÓN PRINCIPAL */}
+      {/* NAVEGACIÓN PRINCIPAL CON LOGO OFICIAL */}
       <header className="sticky top-0 z-40 backdrop-blur-xl bg-zinc-950/90 border-b border-purple-900/40">
         <nav className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <a href="#" className="flex items-center gap-2 text-2xl font-black text-white">
-            <div className="p-2 rounded-xl bg-purple-950/80 border border-purple-500/50 shadow-[0_0_15px_rgba(168,85,247,0.4)]">
-              <Sparkles className="w-6 h-6 text-purple-400" />
-            </div>
-            <span>NOVA<span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-fuchsia-400 to-cyan-400">CREATIVA</span></span>
+          <a href="#" className="flex items-center gap-3 group">
+            <img
+              src="/images/nova-logo.png"
+              alt="Isotipo NovaCreativa"
+              className="h-9 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+            />
+            <img
+              src="/images/nova-letras.png"
+              alt="NovaCreativa"
+              className="h-7 w-auto object-contain brightness-0 invert"
+            />
           </a>
 
           <ul className="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-300">
@@ -262,7 +384,7 @@ export default function App() {
       <main className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-purple-500 selection:text-white">
         <section className="relative max-w-7xl mx-auto px-6 pt-24 pb-20 flex flex-col items-center text-center">
           <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-950/80 border border-purple-500/50 text-purple-300 text-xs font-semibold uppercase tracking-widest mb-8 shadow-[0_0_15px_rgba(168,85,247,0.3)]">
-            <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+            <img src="/images/nova-logo.png" alt="" className="w-4 h-4 object-contain" />
             Estudio de Diseño & Desarrollo Digital
           </span>
 
@@ -354,7 +476,7 @@ export default function App() {
         </section>
       </footer>
 
-      {/* 1. MODAL DE HISTORIAL */}
+      {/* 1. MODAL DE HISTORIAL CON CHAT BIDIRECCIONAL */}
       <dialog
         ref={historyModalRef}
         className="backdrop:bg-black/85 bg-zinc-900/95 text-white p-6 sm:p-8 rounded-3xl border border-purple-500/50 max-w-2xl w-full shadow-[0_0_50px_rgba(168,85,247,0.4)] backdrop-blur-2xl"
@@ -401,43 +523,21 @@ export default function App() {
           <h4 className="text-sm font-bold text-zinc-300 mb-3 flex items-center gap-2">
             <Clock className="w-4 h-4 text-amber-400" /> Ideas en Revisión
           </h4>
-          <div className="space-y-3 max-h-48 overflow-y-auto pr-1">
+          <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
             {loadingIdeas ? (
               <p className="text-xs text-zinc-400 py-3 text-center">Cargando...</p>
             ) : ideasEnRevision.length === 0 ? (
               <p className="text-xs text-zinc-500 py-2 italic">No hay ideas en proceso de revisión actualmente.</p>
             ) : (
-              ideasEnRevision.map(item => {
-                const adminMsg = getAdminMessage(item);
-                return (
-                  <article key={item.id} className="p-4 rounded-xl bg-zinc-950 border border-amber-900/40 flex flex-col gap-3">
-                    <div className="flex items-center justify-between">
-                      <nav>
-                        <h5 className="font-bold text-white text-sm">{item.titulo}</h5>
-                        <p className="text-xs text-zinc-400">{item.servicio} • <span className="text-purple-300">{item.presupuesto}</span></p>
-                      </nav>
-                      <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-md bg-amber-950 text-amber-300 border border-amber-500/30">
-                          En revisión
-                        </span>
-                        <button onClick={() => handleDeleteIdea(item.id)} className="text-zinc-500 hover:text-red-400 p-1 transition cursor-pointer" title="Eliminar">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {adminMsg && (
-                      <aside className="p-3 rounded-lg bg-amber-950/30 border border-amber-500/30 text-xs flex items-start gap-2">
-                        <MessageSquare className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                        <div>
-                          <span className="font-bold text-amber-300 block mb-0.5">Nota del equipo NovaCreativa:</span>
-                          <p className="text-zinc-300 leading-relaxed">{adminMsg}</p>
-                        </div>
-                      </aside>
-                    )}
-                  </article>
-                );
-              })
+              ideasEnRevision.map(item =>
+                renderIdeaCard(
+                  item,
+                  'border-amber-900/40',
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-md bg-amber-950 text-amber-300 border border-amber-500/30">
+                    En revisión
+                  </span>
+                )
+              )
             )}
           </div>
         </section>
@@ -447,41 +547,19 @@ export default function App() {
           <h4 className="text-sm font-bold text-zinc-300 mb-3 flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Ideas Aceptadas
           </h4>
-          <div className="space-y-3 max-h-48 overflow-y-auto pr-1">
+          <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
             {ideasAceptadas.length === 0 ? (
               <p className="text-xs text-zinc-500 py-2 italic">Aún no hay ideas aceptadas.</p>
             ) : (
-              ideasAceptadas.map(item => {
-                const adminMsg = getAdminMessage(item);
-                return (
-                  <article key={item.id} className="p-4 rounded-xl bg-zinc-950 border border-emerald-900/40 flex flex-col gap-3">
-                    <div className="flex items-center justify-between">
-                      <nav>
-                        <h5 className="font-bold text-white text-sm">{item.titulo}</h5>
-                        <p className="text-xs text-zinc-400">{item.servicio} • <span className="text-purple-300">{item.presupuesto}</span></p>
-                      </nav>
-                      <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-md bg-emerald-950 text-emerald-300 border border-emerald-500/30">
-                          ✨ Idea aceptada
-                        </span>
-                        <button onClick={() => handleDeleteIdea(item.id)} className="text-zinc-500 hover:text-red-400 p-1 transition cursor-pointer" title="Eliminar">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {adminMsg && (
-                      <aside className="p-3 rounded-lg bg-emerald-950/30 border border-emerald-500/30 text-xs flex items-start gap-2">
-                        <MessageSquare className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                        <div>
-                          <span className="font-bold text-emerald-300 block mb-0.5">Respuesta de NovaCreativa:</span>
-                          <p className="text-zinc-300 leading-relaxed">{adminMsg}</p>
-                        </div>
-                      </aside>
-                    )}
-                  </article>
-                );
-              })
+              ideasAceptadas.map(item =>
+                renderIdeaCard(
+                  item,
+                  'border-emerald-900/40',
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-md bg-emerald-950 text-emerald-300 border border-emerald-500/30">
+                    ✨ Idea aceptada
+                  </span>
+                )
+              )
             )}
           </div>
         </section>
@@ -491,41 +569,19 @@ export default function App() {
           <h4 className="text-sm font-bold text-zinc-300 mb-3 flex items-center gap-2">
             <XCircle className="w-4 h-4 text-red-400" /> Ideas Rechazadas
           </h4>
-          <div className="space-y-3 max-h-48 overflow-y-auto pr-1">
+          <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
             {ideasRechazadas.length === 0 ? (
               <p className="text-xs text-zinc-500 py-2 italic">No hay ideas rechazadas.</p>
             ) : (
-              ideasRechazadas.map(item => {
-                const adminMsg = getAdminMessage(item);
-                return (
-                  <article key={item.id} className="p-4 rounded-xl bg-zinc-950 border border-red-900/40 flex flex-col gap-3">
-                    <div className="flex items-center justify-between">
-                      <nav>
-                        <h5 className="font-bold text-white text-sm">{item.titulo}</h5>
-                        <p className="text-xs text-zinc-400">{item.servicio} • <span className="text-purple-300">{item.presupuesto}</span></p>
-                      </nav>
-                      <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-md bg-red-950 text-red-300 border border-red-500/30">
-                          ❌ Idea rechazada
-                        </span>
-                        <button onClick={() => handleDeleteIdea(item.id)} className="text-zinc-500 hover:text-red-400 p-1 transition cursor-pointer" title="Eliminar">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {adminMsg && (
-                      <aside className="p-3 rounded-lg bg-red-950/30 border border-red-500/30 text-xs flex items-start gap-2">
-                        <MessageSquare className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
-                        <div>
-                          <span className="font-bold text-red-300 block mb-0.5">Motivo / Comentario de NovaCreativa:</span>
-                          <p className="text-zinc-300 leading-relaxed">{adminMsg}</p>
-                        </div>
-                      </aside>
-                    )}
-                  </article>
-                );
-              })
+              ideasRechazadas.map(item =>
+                renderIdeaCard(
+                  item,
+                  'border-red-900/40',
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-md bg-red-950 text-red-300 border border-red-500/30">
+                    ❌ Idea rechazada
+                  </span>
+                )
+              )
             )}
           </div>
         </section>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, X, Send, Lock, Mail, Building, User, AlertCircle, Loader2 } from 'lucide-react';
+import { X, Send, Lock, Mail, Building, User, AlertCircle, Loader2 } from 'lucide-react';
 import { registerCompany, loginCompany } from '../services/api';
 
 export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
@@ -55,10 +55,14 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
         open
         className="relative m-0 bg-zinc-900 text-white p-6 sm:p-8 rounded-3xl border border-purple-500/40 max-w-lg w-full shadow-[0_0_50px_rgba(168,85,247,0.4)] backdrop-blur-2xl block"
       >
-        {/* CABECERA DEL MODAL */}
+        {/* CABECERA DEL MODAL CON ISOTIPO OFICIAL */}
         <header className="flex justify-between items-center mb-6 border-b border-purple-900/40 pb-4">
-          <h3 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-purple-400" />
+          <h3 className="text-xl sm:text-2xl font-bold flex items-center gap-2.5">
+            <img
+              src="/images/nova-logo.png"
+              alt="NovaCreativa"
+              className="w-6 h-6 object-contain"
+            />
             {isRegister ? 'Crear Cuenta de Empresa' : 'Portal de Empresa'}
           </h3>
           <button
